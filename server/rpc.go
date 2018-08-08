@@ -384,14 +384,15 @@ func (h *lphttp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func StartTranscodeServer(bind string, publicURI *url.URL, node *core.LivepeerNode) {
+// XXX do something about the implicit start of the http mux? this smells
+func StartTranscodeServer(bind string, publicURI *url.URL, mux *http.ServeMux, node *core.LivepeerNode) {
 	s := grpc.NewServer()
 	addr := node.Eth.Account().Address
 	orch := orchestrator{transcoder: publicURI.String(), node: node, address: addr}
 	RegisterOrchestratorServer(s, &orch)
 	lp := lphttp{
 		orchestrator: s,
-		transcoder:   http.NewServeMux(),
+		transcoder:   mux,
 	}
 	lp.transcoder.HandleFunc("/segment", orch.ServeSegment)
 
