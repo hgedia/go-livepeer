@@ -23,9 +23,17 @@ const TranscodeLoopTimeout = 10 * time.Minute
 
 type SegmentChan chan *SegChanData
 
+// XXX maybe reuse protobuf response struct somehow
+type TranscodeResult struct {
+	Err    error
+	Urls   []string
+	Hashes [][]byte
+	Sig    []byte
+}
+
 type SegChanData struct {
 	seg *SignedSegment
-	res chan error
+	res chan *TranscodeResult
 }
 
 func (n *LivepeerNode) getSegmentChan(job *ethTypes.Job) (SegmentChan, error) {
@@ -45,29 +53,24 @@ func (n *LivepeerNode) getSegmentChan(job *ethTypes.Job) (SegmentChan, error) {
 	return sc, nil
 }
 
-func (n *LivepeerNode) TranscodeSegment(job *ethTypes.Job, ss *SignedSegment) error {
+func (n *LivepeerNode) TranscodeSegment(job *ethTypes.Job, ss *SignedSegment) (*TranscodeResult, error) {
 	glog.V(common.DEBUG).Infof("Starting to transcode segment %v", ss.Seg.SeqNo)
 	ch, err := n.getSegmentChan(job)
 	if err != nil {
 		glog.Error("Could not find segment chan ", err)
-		return err
+		return nil, err
 	}
-	segChan := &SegChanData{seg: ss, res: make(chan error, 1)}
+	segChan := &SegChanData{seg: ss, res: make(chan *TranscodeResult, 1)}
 	select {
 	case ch <- segChan:
 		glog.V(common.DEBUG).Info("Submitted segment to transcode loop")
 	default:
 		// sending segChan should not block; if it does, the channel is busy
 		glog.Error("Transcoder was busy with a previous segment!")
-		return fmt.Errorf("TranscoderBusy")
+		return nil, fmt.Errorf("TranscoderBusy")
 	}
-	select {
-	case err := <-segChan.res:
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	res := <-segChan.res
+	return res, res.Err
 }
 
 func (n *LivepeerNode) transcodeAndBroadcastSeg(seg *stream.HLSSegment, sig []byte, cm eth.ClaimManager, t transcoder.Transcoder, resultStrmIDs []StreamID, config net.TranscodeConfig) error {
@@ -208,7 +211,8 @@ func (n *LivepeerNode) transcodeSegmentLoop(job *ethTypes.Job, segChan SegmentCh
 				n.claimMutex.Unlock()
 				return
 			case chanData := <-segChan:
-				chanData.res <- n.transcodeAndBroadcastSeg(&chanData.seg.Seg, chanData.seg.Sig, cm, tr, resultStrmIDs, config)
+				err := n.transcodeAndBroadcastSeg(&chanData.seg.Seg, chanData.seg.Sig, cm, tr, resultStrmIDs, config)
+				chanData.res <- &TranscodeResult{Err: err}
 			}
 			cancel()
 		}
