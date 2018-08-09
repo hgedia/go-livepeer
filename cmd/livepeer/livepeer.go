@@ -59,6 +59,7 @@ func main() {
 	datadir := flag.String("datadir", fmt.Sprintf("%v/.lpData", usr.HomeDir), "data directory")
 	rtmpIP := flag.String("rtmpIP", "127.0.0.1", "IP to bind for HTTP RPC commands")
 	httpIP := flag.String("httpIP", "127.0.0.1", "IP to bind for HTTP RPC commands")
+	cliAddr := flag.String("cliAddr", "127.0.0.1:8935", "Address to bind for  CLI commands")
 	transcoder := flag.Bool("transcoder", false, "Set to true to be a transcoder")
 	maxPricePerSegment := flag.String("maxPricePerSegment", "1", "Max price per segment for a broadcast job")
 	transcodingOptions := flag.String("transcodingOptions", "P240p30fps16x9,P360p30fps16x9", "Transcoding options for broadcast job")
@@ -261,6 +262,7 @@ func main() {
 	//Set up the media server
 	s := server.NewLivepeerServer(*rtmpPort, *rtmpIP, *httpPort, *httpIP, n)
 	ec := make(chan error)
+	wc := make(chan struct{})
 	msCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -271,7 +273,10 @@ func main() {
 	}
 
 	go func() {
-		s.StartWebserver()
+		s.StartWebserver(*cliAddr)
+		close(wc)
+	}()
+	go func() {
 		ec <- s.StartMediaServer(msCtx, bigMaxPricePerSegment, *transcodingOptions)
 	}()
 
@@ -291,6 +296,9 @@ func main() {
 		return
 	case <-msCtx.Done():
 		glog.Infof("MediaServer Done()")
+		return
+	case <-wc:
+		glog.Infof("CLI webserver shut down")
 		return
 	case sig := <-c:
 		glog.Infof("Exiting Livepeer: %v", sig)
