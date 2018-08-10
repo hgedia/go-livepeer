@@ -48,7 +48,7 @@ type Orchestrator interface {
 	Sign([]byte) ([]byte, error)
 	CurrentBlock() *big.Int
 	GetJob(int64) (*lpTypes.Job, error)
-	TranscodeSeg(*lpTypes.Job, *core.SignedSegment) error
+	TranscodeSeg(*lpTypes.Job, *core.SignedSegment) (*core.TranscodeResult, error)
 	StreamIDs(*lpTypes.Job) ([]core.StreamID, error)
 }
 
@@ -111,9 +111,8 @@ func (orch *orchestrator) StreamIDs(job *lpTypes.Job) ([]core.StreamID, error) {
 	return streamIds, nil
 }
 
-func (orch *orchestrator) TranscodeSeg(job *lpTypes.Job, ss *core.SignedSegment) error {
-	_, err := orch.node.TranscodeSegment(job, ss)
-	return err
+func (orch *orchestrator) TranscodeSeg(job *lpTypes.Job, ss *core.SignedSegment) (*core.TranscodeResult, error) {
+	return orch.node.TranscodeSegment(job, ss)
 }
 
 // grpc methods
@@ -363,12 +362,46 @@ func (orch *orchestrator) ServeSegment(w http.ResponseWriter, r *http.Request) {
 		},
 		Sig: segData.Sig,
 	}
-	if err := orch.TranscodeSeg(job, &ss); err != nil {
+	res, err := orch.TranscodeSeg(job, &ss)
+
+	// sanity check
+	if err != nil &&
+		(len(res.Urls) != len(res.Hashes) || len(res.Urls) != len(job.Profiles)) {
+		err = fmt.Errorf("Mismatched result lengths")
+	}
+
+	// construct the response
+	var result isTranscodeResult_Result
+	if err != nil {
 		glog.Error("Could not transcode ", err)
-		w.Write([]byte(fmt.Sprintf("Error transcoding segment %v : %v", segData.Seq, err)))
+		result = &TranscodeResult_Error{Error: err.Error()}
+	} else {
+		segments := make([]*TranscodedSegmentData, len(res.Urls))
+		for i, v := range res.Urls {
+			d := &TranscodedSegmentData{
+				Url:  v,
+				Hash: res.Hashes[i],
+			}
+			segments = append(segments, d)
+		}
+		result = &TranscodeResult_Data{
+			Data: &TranscodeData{
+				Segments: segments,
+				Sig:      res.Sig,
+			},
+		}
+	}
+
+	tr := &TranscodeResult{
+		Seq:    segData.Seq,
+		Result: result,
+	}
+	buf, err := proto.Marshal(tr)
+	if err != nil {
+		glog.Error("Unable to marshal transcode result ", err)
 		return
 	}
-	w.Write([]byte(fmt.Sprintf("Successfully transcoded segment %v", segData.Seq)))
+	w.Write(buf)
 }
 
 type lphttp struct {
