@@ -105,10 +105,17 @@ func (c *BasicVideoCache) GetHLSMediaPlaylist(streamID StreamID) *m3u8.MediaPlay
 	if cache, ok := c.GetCache(streamID); ok {
 		return cache.GetMediaPlaylist()
 	}
-
-	//If we don't already have the stream, subscribe and return the playlist
-	//XXX implement
 	return nil
+}
+
+func (c *BasicVideoCache) InsertSegment(streamID StreamID, seg *stream.HLSSegment) {
+	c.segLock.Lock()
+	defer c.segLock.Unlock()
+	sc, ok := c.segCache[streamID]
+	if !ok {
+		sc = newSegCache(SegCacheLen)
+	}
+	sc.Insert(seg)
 }
 
 func (c *BasicVideoCache) GetHLSSegment(streamID StreamID, segName string) *stream.HLSSegment {
