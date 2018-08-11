@@ -114,7 +114,7 @@ type LivepeerEthClient interface {
 	Paused() (bool, error)
 
 	//ENS
-	RegisterSubdomain(subDomain string)
+	RegisterSubdomain(subDomain string) error
 
 	// Events
 	WatchForJob(string) (*lpTypes.Job, error)
@@ -148,6 +148,7 @@ type client struct {
 	minterAddr          ethcommon.Address
 	verifierAddr        ethcommon.Address
 	faucetAddr          ethcommon.Address
+	subdomainAddr       ethcommon.Address
 
 	// Embedded contract sessions
 	*contracts.ControllerSession
@@ -159,6 +160,7 @@ type client struct {
 	*contracts.MinterSession
 	*contracts.LivepeerVerifierSession
 	*contracts.LivepeerTokenFaucetSession
+	*contracts.SubdomainerSession
 
 	nonceInitialized bool
 	nextNonce        uint64
@@ -396,6 +398,21 @@ func (c *client) setContracts(opts *bind.TransactOpts) error {
 	}
 
 	glog.V(common.SHORT).Infof("LivepeerTokenFaucet: %v", c.faucetAddr.Hex())
+
+	//TODO fetch address from controller
+	c.subdomainAddr = ethcommon.BytesToAddress([]byte("0x9ae63ee2e8ed29f4a4edb982f918a33c2caf3f98"))
+	glog.V(common.SHORT).Infof("Subdomain address: %v", c.subdomainAddr.Hex())
+
+	subdomainer, err := contracts.NewSubdomainer(c.subdomainAddr, c.backend)
+	if err != nil {
+		glog.Errorf("Error creating subdomainer binding: %v", err)
+		return err
+	}
+
+	c.SubdomainerSession = &contracts.SubdomainerSession{
+		Contract:     subdomainer,
+		TransactOpts: *opts,
+	}
 
 	return nil
 }
@@ -888,8 +905,7 @@ func (c *client) ContractAddresses() map[string]ethcommon.Address {
 	addrMap["BondingManager"] = c.bondingManagerAddr
 	addrMap["Minter"] = c.minterAddr
 	addrMap["Verifier"] = c.verifierAddr
-	//addrMap["Subdomainer"] = c.subdomainer
-
+	addrMap["Subdomainer"] = c.subdomainAddr
 	return addrMap
 }
 
@@ -976,8 +992,15 @@ func (c *client) ReplaceTransaction(tx *types.Transaction, method string, gasPri
 	return newSignedTx, err
 }
 
-func (c *client) RegisterSubdomain(subDomain string) error {
-
+func (c *client) RegisterSubdomain(subdomain string) error {
+	//TODO : Really?
+	var subNode [32]byte
+	copy(subNode[:], []byte(subdomain))
+	_, err := c.SubdomainerSession.SubRegister(subNode)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Watch for a new job matching the given streamId.
