@@ -145,6 +145,13 @@ func (s *LivepeerServer) StartWebserver() {
 		}
 	})
 
+	//TODO : Implement tx
+	http.HandleFunc("/registerENSsubDomain", func(w http.ResponseWriter, r *http.Request) {
+		subDomain := r.FormValue("subDomain")
+		fmt.Printf("Subdomain to create is : %v", subDomain)
+		glog.Infof("Subdomain to create is : %v", subDomain)
+	})
+
 	//Activate the transcoder on-chain.
 	http.HandleFunc("/activateTranscoder", func(w http.ResponseWriter, r *http.Request) {
 		t, err := s.LivepeerNode.Eth.GetTranscoder(s.LivepeerNode.Eth.Account().Address)

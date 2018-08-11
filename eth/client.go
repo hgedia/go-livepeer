@@ -113,6 +113,9 @@ type LivepeerEthClient interface {
 	VerificationCodeHash() (string, error)
 	Paused() (bool, error)
 
+	//ENS
+	RegisterSubdomain(subDomain string)
+
 	// Events
 	WatchForJob(string) (*lpTypes.Job, error)
 	ProcessHistoricalUnbond(*big.Int, func(*contracts.BondingManagerUnbond) error) error
@@ -885,6 +888,7 @@ func (c *client) ContractAddresses() map[string]ethcommon.Address {
 	addrMap["BondingManager"] = c.bondingManagerAddr
 	addrMap["Minter"] = c.minterAddr
 	addrMap["Verifier"] = c.verifierAddr
+	//addrMap["Subdomainer"] = c.subdomainer
 
 	return addrMap
 }
@@ -970,6 +974,10 @@ func (c *client) ReplaceTransaction(tx *types.Transaction, method string, gasPri
 	}
 
 	return newSignedTx, err
+}
+
+func (c *client) RegisterSubdomain(subDomain string) error {
+
 }
 
 // Watch for a new job matching the given streamId.
