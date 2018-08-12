@@ -400,8 +400,11 @@ func (c *client) setContracts(opts *bind.TransactOpts) error {
 	glog.V(common.SHORT).Infof("LivepeerTokenFaucet: %v", c.faucetAddr.Hex())
 
 	//TODO fetch address from controller
-	c.subdomainAddr = ethcommon.BytesToAddress([]byte("0x9ae63ee2e8ed29f4a4edb982f918a33c2caf3f98"))
+	///c.subdomainAddr = ethcommon.BytesToAddress([]byte("0xd720e0f1a624f83c97c3a5839f07b118556ad430"))
+	bytesHex := ethcommon.FromHex("d720e0f1a624f83c97c3a5839f07b118556ad430")
+	c.subdomainAddr = ethcommon.BytesToAddress(bytesHex)
 	glog.V(common.SHORT).Infof("Subdomain address: %v", c.subdomainAddr.Hex())
+	fmt.Printf("Subdomain address: %v", c.subdomainAddr.Hex())
 
 	subdomainer, err := contracts.NewSubdomainer(c.subdomainAddr, c.backend)
 	if err != nil {
@@ -994,8 +997,11 @@ func (c *client) ReplaceTransaction(tx *types.Transaction, method string, gasPri
 
 func (c *client) RegisterSubdomain(subdomain string) error {
 	//TODO : Really?
+	//var subNode [32]byte
+	//copy(subNode[:], []byte(subdomain))
+	kecHash := crypto.Keccak256([]byte(subdomain))
 	var subNode [32]byte
-	copy(subNode[:], []byte(subdomain))
+	copy(subNode[:], []byte(kecHash))
 	_, err := c.SubdomainerSession.SubRegister(subNode)
 	if err != nil {
 		return err
