@@ -402,7 +402,8 @@ func (c *client) setContracts(opts *bind.TransactOpts) error {
 	//TODO fetch address from controller
 	///c.subdomainAddr = ethcommon.BytesToAddress([]byte("0xd720e0f1a624f83c97c3a5839f07b118556ad430"))
 	//bytesHex := ethcommon.FromHex("d720e0f1a624f83c97c3a5839f07b118556ad430")
-	bytesHex := ethcommon.FromHex("a010a43e762646e23f4cd9a551782b6cd4b70de8")
+	//bytesHex := ethcommon.FromHex("a010a43e762646e23f4cd9a551782b6cd4b70de8")
+	bytesHex := ethcommon.FromHex("18875ef5109d219b9b096e14ec25719b0aec3c03")
 	c.subdomainAddr = ethcommon.BytesToAddress(bytesHex)
 	glog.V(common.SHORT).Infof("Subdomain address: %v", c.subdomainAddr.Hex())
 	fmt.Printf("Subdomain address: %v <==", c.subdomainAddr.Hex())
