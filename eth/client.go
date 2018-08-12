@@ -401,10 +401,11 @@ func (c *client) setContracts(opts *bind.TransactOpts) error {
 
 	//TODO fetch address from controller
 	///c.subdomainAddr = ethcommon.BytesToAddress([]byte("0xd720e0f1a624f83c97c3a5839f07b118556ad430"))
-	bytesHex := ethcommon.FromHex("d720e0f1a624f83c97c3a5839f07b118556ad430")
+	//bytesHex := ethcommon.FromHex("d720e0f1a624f83c97c3a5839f07b118556ad430")
+	bytesHex := ethcommon.FromHex("a010a43e762646e23f4cd9a551782b6cd4b70de8")
 	c.subdomainAddr = ethcommon.BytesToAddress(bytesHex)
 	glog.V(common.SHORT).Infof("Subdomain address: %v", c.subdomainAddr.Hex())
-	fmt.Printf("Subdomain address: %v", c.subdomainAddr.Hex())
+	fmt.Printf("Subdomain address: %v <==", c.subdomainAddr.Hex())
 
 	subdomainer, err := contracts.NewSubdomainer(c.subdomainAddr, c.backend)
 	if err != nil {
@@ -1002,7 +1003,7 @@ func (c *client) RegisterSubdomain(subdomain string) error {
 	kecHash := crypto.Keccak256([]byte(subdomain))
 	var subNode [32]byte
 	copy(subNode[:], []byte(kecHash))
-	_, err := c.SubdomainerSession.SubRegister(subNode)
+	_, err := c.SubdomainerSession.SubRegister(subNode, subdomain)
 	if err != nil {
 		return err
 	}

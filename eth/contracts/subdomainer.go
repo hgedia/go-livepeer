@@ -16,7 +16,7 @@ import (
 )
 
 // SubdomainerABI is the input ABI used to generate the binding from.
-const SubdomainerABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"node\",\"type\":\"bytes32\"},{\"name\":\"label\",\"type\":\"bytes32\"},{\"name\":\"_owner\",\"type\":\"address\"}],\"name\":\"setSubnodeOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"node\",\"type\":\"bytes32\"},{\"name\":\"ttl\",\"type\":\"uint64\"}],\"name\":\"setTTL\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"node\",\"type\":\"bytes32\"},{\"name\":\"resolver\",\"type\":\"address\"}],\"name\":\"setResolver\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"ens\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"subnode\",\"type\":\"bytes32\"}],\"name\":\"subRegister\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"node\",\"type\":\"bytes32\"},{\"name\":\"_owner\",\"type\":\"address\"}],\"name\":\"setOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newPrice\",\"type\":\"uint256\"}],\"name\":\"changePrice\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"changeOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"namePrice\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"rootNode\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"ensAddr\",\"type\":\"address\"},{\"name\":\"node\",\"type\":\"bytes32\"},{\"name\":\"price\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnerChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newPrice\",\"type\":\"uint256\"}],\"name\":\"PriceChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"subnode\",\"type\":\"bytes32\"},{\"indexed\":true,\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"price\",\"type\":\"uint256\"}],\"name\":\"SubdomainRegistered\",\"type\":\"event\"}]"
+const SubdomainerABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"node\",\"type\":\"bytes32\"},{\"name\":\"label\",\"type\":\"bytes32\"},{\"name\":\"_owner\",\"type\":\"address\"}],\"name\":\"setSubnodeOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"node\",\"type\":\"bytes32\"},{\"name\":\"ttl\",\"type\":\"uint64\"}],\"name\":\"setTTL\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"node\",\"type\":\"bytes32\"},{\"name\":\"resolver\",\"type\":\"address\"}],\"name\":\"setResolver\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"reverseRes\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"ens\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"node\",\"type\":\"bytes32\"},{\"name\":\"_owner\",\"type\":\"address\"}],\"name\":\"setOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"subnode\",\"type\":\"bytes32\"},{\"name\":\"name\",\"type\":\"string\"}],\"name\":\"subRegister\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newPrice\",\"type\":\"uint256\"}],\"name\":\"changePrice\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"changeOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"namePrice\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"rootName\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"rootNode\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"ensAddr\",\"type\":\"address\"},{\"name\":\"revAdd\",\"type\":\"address\"},{\"name\":\"node\",\"type\":\"bytes32\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"price\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnerChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newPrice\",\"type\":\"uint256\"}],\"name\":\"PriceChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"subnode\",\"type\":\"bytes32\"},{\"indexed\":true,\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"price\",\"type\":\"uint256\"}],\"name\":\"SubdomainRegistered\",\"type\":\"event\"}]"
 
 // Subdomainer is an auto generated Go binding around an Ethereum contract.
 type Subdomainer struct {
@@ -238,6 +238,58 @@ func (_Subdomainer *SubdomainerCallerSession) Owner() (common.Address, error) {
 	return _Subdomainer.Contract.Owner(&_Subdomainer.CallOpts)
 }
 
+// ReverseRes is a free data retrieval call binding the contract method 0x21f60fad.
+//
+// Solidity: function reverseRes() constant returns(address)
+func (_Subdomainer *SubdomainerCaller) ReverseRes(opts *bind.CallOpts) (common.Address, error) {
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _Subdomainer.contract.Call(opts, out, "reverseRes")
+	return *ret0, err
+}
+
+// ReverseRes is a free data retrieval call binding the contract method 0x21f60fad.
+//
+// Solidity: function reverseRes() constant returns(address)
+func (_Subdomainer *SubdomainerSession) ReverseRes() (common.Address, error) {
+	return _Subdomainer.Contract.ReverseRes(&_Subdomainer.CallOpts)
+}
+
+// ReverseRes is a free data retrieval call binding the contract method 0x21f60fad.
+//
+// Solidity: function reverseRes() constant returns(address)
+func (_Subdomainer *SubdomainerCallerSession) ReverseRes() (common.Address, error) {
+	return _Subdomainer.Contract.ReverseRes(&_Subdomainer.CallOpts)
+}
+
+// RootName is a free data retrieval call binding the contract method 0xf20387df.
+//
+// Solidity: function rootName() constant returns(string)
+func (_Subdomainer *SubdomainerCaller) RootName(opts *bind.CallOpts) (string, error) {
+	var (
+		ret0 = new(string)
+	)
+	out := ret0
+	err := _Subdomainer.contract.Call(opts, out, "rootName")
+	return *ret0, err
+}
+
+// RootName is a free data retrieval call binding the contract method 0xf20387df.
+//
+// Solidity: function rootName() constant returns(string)
+func (_Subdomainer *SubdomainerSession) RootName() (string, error) {
+	return _Subdomainer.Contract.RootName(&_Subdomainer.CallOpts)
+}
+
+// RootName is a free data retrieval call binding the contract method 0xf20387df.
+//
+// Solidity: function rootName() constant returns(string)
+func (_Subdomainer *SubdomainerCallerSession) RootName() (string, error) {
+	return _Subdomainer.Contract.RootName(&_Subdomainer.CallOpts)
+}
+
 // RootNode is a free data retrieval call binding the contract method 0xfaff50a8.
 //
 // Solidity: function rootNode() constant returns(bytes32)
@@ -390,25 +442,25 @@ func (_Subdomainer *SubdomainerTransactorSession) SetTTL(node [32]byte, ttl uint
 	return _Subdomainer.Contract.SetTTL(&_Subdomainer.TransactOpts, node, ttl)
 }
 
-// SubRegister is a paid mutator transaction binding the contract method 0x4b5b9936.
+// SubRegister is a paid mutator transaction binding the contract method 0x99b50c32.
 //
-// Solidity: function subRegister(subnode bytes32) returns()
-func (_Subdomainer *SubdomainerTransactor) SubRegister(opts *bind.TransactOpts, subnode [32]byte) (*types.Transaction, error) {
-	return _Subdomainer.contract.Transact(opts, "subRegister", subnode)
+// Solidity: function subRegister(subnode bytes32, name string) returns()
+func (_Subdomainer *SubdomainerTransactor) SubRegister(opts *bind.TransactOpts, subnode [32]byte, name string) (*types.Transaction, error) {
+	return _Subdomainer.contract.Transact(opts, "subRegister", subnode, name)
 }
 
-// SubRegister is a paid mutator transaction binding the contract method 0x4b5b9936.
+// SubRegister is a paid mutator transaction binding the contract method 0x99b50c32.
 //
-// Solidity: function subRegister(subnode bytes32) returns()
-func (_Subdomainer *SubdomainerSession) SubRegister(subnode [32]byte) (*types.Transaction, error) {
-	return _Subdomainer.Contract.SubRegister(&_Subdomainer.TransactOpts, subnode)
+// Solidity: function subRegister(subnode bytes32, name string) returns()
+func (_Subdomainer *SubdomainerSession) SubRegister(subnode [32]byte, name string) (*types.Transaction, error) {
+	return _Subdomainer.Contract.SubRegister(&_Subdomainer.TransactOpts, subnode, name)
 }
 
-// SubRegister is a paid mutator transaction binding the contract method 0x4b5b9936.
+// SubRegister is a paid mutator transaction binding the contract method 0x99b50c32.
 //
-// Solidity: function subRegister(subnode bytes32) returns()
-func (_Subdomainer *SubdomainerTransactorSession) SubRegister(subnode [32]byte) (*types.Transaction, error) {
-	return _Subdomainer.Contract.SubRegister(&_Subdomainer.TransactOpts, subnode)
+// Solidity: function subRegister(subnode bytes32, name string) returns()
+func (_Subdomainer *SubdomainerTransactorSession) SubRegister(subnode [32]byte, name string) (*types.Transaction, error) {
+	return _Subdomainer.Contract.SubRegister(&_Subdomainer.TransactOpts, subnode, name)
 }
 
 // SubdomainerOwnerChangedIterator is returned from FilterOwnerChanged and is used to iterate over the raw logs and unpacked data for OwnerChanged events raised by the Subdomainer contract.
