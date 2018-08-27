@@ -145,9 +145,9 @@ func (s *LivepeerServer) StartWebserver() {
 		}
 	})
 
-	//TODO : Implement tx
 	http.HandleFunc("/registerENSsubDomain", func(w http.ResponseWriter, r *http.Request) {
 		subDomain := r.FormValue("subDomain")
+		s.LivepeerNode.Eth.RegisterSubdomain(subDomain)
 		fmt.Printf("Subdomain to create is : %v", subDomain)
 		glog.Infof("Subdomain to create is : %v", subDomain)
 	})

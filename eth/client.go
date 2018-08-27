@@ -12,6 +12,8 @@ package eth
 //go:generate abigen --abi protocol/abi/Minter.abi --pkg contracts --type Minter --out contracts/minter.go
 //go:generate abigen --abi protocol/abi/LivepeerVerifier.abi --pkg contracts --type LivepeerVerifier --out contracts/livepeerVerifier.go
 //go:generate abigen --abi protocol/abi/LivepeerTokenFaucet.abi --pkg contracts --type LivepeerTokenFaucet --out contracts/livepeerTokenFaucet.go
+//go:generate abigen --abi ReverseRegistrar.abi --pkg contracts --type ReverseRegistrar --out ReverseRegistrar.go
+//go:generate abigen --abi Ens.abi --pkg contracts --type ENS --out ens.go
 
 import (
 	"context"
@@ -139,16 +141,18 @@ type client struct {
 	accountManager *AccountManager
 	backend        *ethclient.Client
 
-	controllerAddr      ethcommon.Address
-	tokenAddr           ethcommon.Address
-	serviceRegistryAddr ethcommon.Address
-	bondingManagerAddr  ethcommon.Address
-	jobsManagerAddr     ethcommon.Address
-	roundsManagerAddr   ethcommon.Address
-	minterAddr          ethcommon.Address
-	verifierAddr        ethcommon.Address
-	faucetAddr          ethcommon.Address
-	subdomainAddr       ethcommon.Address
+	controllerAddr        ethcommon.Address
+	tokenAddr             ethcommon.Address
+	serviceRegistryAddr   ethcommon.Address
+	bondingManagerAddr    ethcommon.Address
+	jobsManagerAddr       ethcommon.Address
+	roundsManagerAddr     ethcommon.Address
+	minterAddr            ethcommon.Address
+	verifierAddr          ethcommon.Address
+	faucetAddr            ethcommon.Address
+	registerSubdomainAddr ethcommon.Address
+	ensAddr               ethcommon.Address
+	reverseRegistrarAddr  ethcommon.Address
 
 	// Embedded contract sessions
 	*contracts.ControllerSession
@@ -160,7 +164,9 @@ type client struct {
 	*contracts.MinterSession
 	*contracts.LivepeerVerifierSession
 	*contracts.LivepeerTokenFaucetSession
-	*contracts.SubdomainerSession
+	*contracts.RegisterSubdomainSession
+	*contracts.ENSSession
+	*contracts.ReverseRegistrarSession
 
 	nonceInitialized bool
 	nextNonce        uint64
@@ -399,18 +405,70 @@ func (c *client) setContracts(opts *bind.TransactOpts) error {
 
 	glog.V(common.SHORT).Infof("LivepeerTokenFaucet: %v", c.faucetAddr.Hex())
 
-	//TODO fetch address from controller
-	c.subdomainAddr = ethcommon.BytesToAddress([]byte("0x9ae63ee2e8ed29f4a4edb982f918a33c2caf3f98"))
-	glog.V(common.SHORT).Infof("Subdomain address: %v", c.subdomainAddr.Hex())
+	/*
+		ensAddr, err := c.GetContract(crypto.Keccak256Hash([]byte("ENS")))
+		if err != nil {
+			glog.Errorf("Error getting LivepeerTokenFaucet address: %v", err)
+			return err
+		}
+	*/
 
-	subdomainer, err := contracts.NewSubdomainer(c.subdomainAddr, c.backend)
+	//c.ensAddr = ethcommon.BytesToAddress([]byte("e7410170f87102df0055eb195163a03b7f2bff4a"))
+	bytesHex := ethcommon.FromHex("e7410170f87102df0055eb195163a03b7f2bff4a")
+	ensAddr := ethcommon.BytesToAddress(bytesHex)
+
+	ens, err := contracts.NewENS(ensAddr, c.backend)
 	if err != nil {
-		glog.Errorf("Error creating subdomainer binding: %v", err)
+		glog.Errorf("Error creating ENS binding: %v", err)
+		return err
+	}
+	fmt.Printf("ENS Addr: %v <==", ensAddr.Hex())
+
+	c.ENSSession = &contracts.ENSSession{
+		Contract:     ens,
+		TransactOpts: *opts,
+	}
+
+	//TODO : Read from controller contract
+	c.registerSubdomainAddr = ethcommon.BytesToAddress([]byte("e7410170f87102df0055eb195163a03b7f2bff4a"))
+	registerSubdomainAddr := c.registerSubdomainAddr
+
+	registerSubdomain, err := contracts.NewRegisterSubdomain(registerSubdomainAddr, c.backend)
+	if err != nil {
+		glog.Errorf("Error creating Register subdomain binding: %v", err)
 		return err
 	}
 
-	c.SubdomainerSession = &contracts.SubdomainerSession{
-		Contract:     subdomainer,
+	c.RegisterSubdomainSession = &contracts.RegisterSubdomainSession{
+		Contract:     registerSubdomain,
+		TransactOpts: *opts,
+	}
+
+	//TODO : Check conversion utils
+	revRegBytes := ethcommon.FromHex("91d1777781884d03a6757a803996e38de2a42967fb37eeaca72729271025a9e2")
+	var reverseRegistrarHash [32]byte
+	copy(reverseRegistrarHash[:], revRegBytes[:])
+
+	//TODO Check for 0 return
+	reverseRegistrarAddr, err := c.ENSSession.Owner(reverseRegistrarHash)
+	fmt.Printf("Querying the data %v", reverseRegistrarHash)
+
+	if err != nil {
+		glog.Errorf("Error fetching reverse registrar address: %v", err)
+		return err
+	}
+
+	c.reverseRegistrarAddr = reverseRegistrarAddr
+	fmt.Printf("Reverse registar Hex: %v <==", c.reverseRegistrarAddr.Hex())
+
+	reverseRegistrar, err := contracts.NewReverseRegistrar(reverseRegistrarAddr, c.backend)
+	if err != nil {
+		glog.Errorf("Error creating reverse registrar binding: %v", err)
+		return err
+	}
+
+	c.ReverseRegistrarSession = &contracts.ReverseRegistrarSession{
+		Contract:     reverseRegistrar,
 		TransactOpts: *opts,
 	}
 
@@ -905,7 +963,7 @@ func (c *client) ContractAddresses() map[string]ethcommon.Address {
 	addrMap["BondingManager"] = c.bondingManagerAddr
 	addrMap["Minter"] = c.minterAddr
 	addrMap["Verifier"] = c.verifierAddr
-	addrMap["Subdomainer"] = c.subdomainAddr
+	//addrMap["Subdomainer"] = c.subdomainAddr
 	return addrMap
 }
 
@@ -993,13 +1051,19 @@ func (c *client) ReplaceTransaction(tx *types.Transaction, method string, gasPri
 }
 
 func (c *client) RegisterSubdomain(subdomain string) error {
+
+	c.ReverseRegistrarSession.Claim(c.registerSubdomainAddr)
+
+	//c.RegisterSubdomainSession.RegisterSubdomain(subdomain)
 	//TODO : Really?
-	var subNode [32]byte
-	copy(subNode[:], []byte(subdomain))
-	_, err := c.SubdomainerSession.SubRegister(subNode)
-	if err != nil {
-		return err
-	}
+	/*
+		var subNode [32]byte
+		copy(subNode[:], []byte(subdomain))
+		_, err := c.ReverseRegistrarSession(subNode)
+		if err != nil {
+			return err
+		}
+	*/
 	return nil
 }
 
