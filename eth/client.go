@@ -471,7 +471,6 @@ func (c *client) setContracts(opts *bind.TransactOpts) error {
 		Contract:     reverseRegistrar,
 		TransactOpts: *opts,
 	}
-
 	return nil
 }
 
@@ -1052,14 +1051,26 @@ func (c *client) ReplaceTransaction(tx *types.Transaction, method string, gasPri
 
 func (c *client) RegisterSubdomain(subdomain string) error {
 
-	c.ReverseRegistrarSession.Claim(c.registerSubdomainAddr)
+	//c.ReverseRegistrarSession.Claim(c.registerSubdomainAddr)
 
 	//c.RegisterSubdomainSession.RegisterSubdomain(subdomain)
 	//TODO : Really?
+
 	/*
+			var subNode [32]byte
+			copy(subNode[:], []byte(subdomain))
+			_, err := c.ReverseRegistrarSession(subNode)
+			if err != nil {
+				return err
+			}
+
+
+		//var subNode [32]byte
+		//copy(subNode[:], []byte(subdomain))
+		kecHash := crypto.Keccak256([]byte(subdomain))
 		var subNode [32]byte
-		copy(subNode[:], []byte(subdomain))
-		_, err := c.ReverseRegistrarSession(subNode)
+		copy(subNode[:], []byte(kecHash))
+		_, err := c.SubdomainerSession.SubRegister(subNode, subdomain)
 		if err != nil {
 			return err
 		}

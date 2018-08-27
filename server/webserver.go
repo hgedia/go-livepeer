@@ -149,6 +149,11 @@ func (s *LivepeerServer) StartWebserver() {
 		subDomain := r.FormValue("subDomain")
 		s.LivepeerNode.Eth.RegisterSubdomain(subDomain)
 		fmt.Printf("Subdomain to create is : %v", subDomain)
+		err := s.LivepeerNode.Eth.RegisterSubdomain(subDomain)
+		if err != nil {
+			glog.Error(err)
+			return
+		}
 		glog.Infof("Subdomain to create is : %v", subDomain)
 	})
 
