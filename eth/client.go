@@ -432,7 +432,7 @@ func (c *client) setContracts(opts *bind.TransactOpts) error {
 	}
 
 	//TODO : Read from controller contract
-	c.registerSubdomainAddr = ethcommon.BytesToAddress([]byte("e7410170f87102df0055eb195163a03b7f2bff4a"))
+	c.registerSubdomainAddr = ethcommon.BytesToAddress([]byte("b0a6fe7b9d93c41f3e75a8595d1f78ecb1915bd0"))
 	registerSubdomainAddr := c.registerSubdomainAddr
 
 	registerSubdomain, err := contracts.NewRegisterSubdomain(registerSubdomainAddr, c.backend)
