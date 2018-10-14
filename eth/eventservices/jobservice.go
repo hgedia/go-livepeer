@@ -11,7 +11,6 @@ import (
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/glog"
-	lpcommon "github.com/livepeer/go-livepeer/common"
 	"github.com/livepeer/go-livepeer/core"
 	"github.com/livepeer/go-livepeer/eth"
 	"github.com/livepeer/go-livepeer/eth/contracts"
@@ -51,8 +50,9 @@ func (s *JobService) Start(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	s.cancelWorker = cancel
 
-	if err := s.processHistoricalEvents(ctx); err != nil {
-		return err
+	startBlock, err := s.node.Database.LastSeenBlock()
+	if err == nil {
+		go s.processHistoricalEvents(ctx, startBlock)
 	}
 
 	go func() {
@@ -111,6 +111,9 @@ func (s *JobService) IsWorking() bool {
 }
 
 func (s *JobService) firstClaim(ctx context.Context, job *lpTypes.Job) error {
+	// We might want to check for the latest block
+	// (from the blockchain, not the local DB)
+	// and skip creating the claimmanager if the job is too old
 	cm, err := s.node.GetClaimManager(job)
 	if err != nil {
 		return err
@@ -196,11 +199,7 @@ func (s *JobService) processNewJob(ctx context.Context, newJob *contracts.JobsMa
 	}
 
 	if job.TranscoderAddress == s.node.Eth.Account().Address {
-		dbjob := lpcommon.NewDBJob(
-			job.JobId, job.StreamId,
-			job.MaxPricePerSegment, job.Profiles,
-			job.BroadcasterAddress, job.TranscoderAddress,
-			job.CreationBlock, job.EndBlock)
+		dbjob := eth.EthJobToDBJob(job)
 		if err := s.node.Database.InsertJob(dbjob); err != nil {
 			return err
 		}
@@ -213,10 +212,10 @@ func (s *JobService) processNewJob(ctx context.Context, newJob *contracts.JobsMa
 	return nil
 }
 
-func (s *JobService) processHistoricalEvents(ctx context.Context) error {
-	startBlock, err := s.node.Database.LastSeenBlock()
-	if err != nil {
-		return err
+func (s *JobService) processHistoricalEvents(ctx context.Context, startBlock *big.Int) error {
+	//Exit early if LastSeenBlock is zero (starting with a new db)
+	if startBlock.Cmp(big.NewInt(0)) == 0 {
+		return nil
 	}
 
 	if err := s.node.Eth.ProcessHistoricalNewJob(startBlock, true, func(newJob *contracts.JobsManagerNewJob) error {
