@@ -12,8 +12,10 @@ package eth
 //go:generate abigen --abi protocol/abi/Minter.abi --pkg contracts --type Minter --out contracts/minter.go
 //go:generate abigen --abi protocol/abi/LivepeerVerifier.abi --pkg contracts --type LivepeerVerifier --out contracts/livepeerVerifier.go
 //go:generate abigen --abi protocol/abi/LivepeerTokenFaucet.abi --pkg contracts --type LivepeerTokenFaucet --out contracts/livepeerTokenFaucet.go
+
 //go:generate abigen --abi ReverseRegistrar.abi --pkg contracts --type ReverseRegistrar --out ReverseRegistrar.go
 //go:generate abigen --abi Ens.abi --pkg contracts --type ENS --out ens.go
+//go:generate abigen --abi SubdomainRegistrar.abi --pkg contracts --type SubdomainRegistrar --out subdomainRegistrar.go
 
 import (
 	"context"
@@ -143,18 +145,18 @@ type client struct {
 	accountManager *AccountManager
 	backend        *ethclient.Client
 
-	controllerAddr        ethcommon.Address
-	tokenAddr             ethcommon.Address
-	serviceRegistryAddr   ethcommon.Address
-	bondingManagerAddr    ethcommon.Address
-	jobsManagerAddr       ethcommon.Address
-	roundsManagerAddr     ethcommon.Address
-	minterAddr            ethcommon.Address
-	verifierAddr          ethcommon.Address
-	faucetAddr            ethcommon.Address
-	registerSubdomainAddr ethcommon.Address
-	ensAddr               ethcommon.Address
-	reverseRegistrarAddr  ethcommon.Address
+	controllerAddr         ethcommon.Address
+	tokenAddr              ethcommon.Address
+	serviceRegistryAddr    ethcommon.Address
+	bondingManagerAddr     ethcommon.Address
+	jobsManagerAddr        ethcommon.Address
+	roundsManagerAddr      ethcommon.Address
+	minterAddr             ethcommon.Address
+	verifierAddr           ethcommon.Address
+	faucetAddr             ethcommon.Address
+	subdomainRegistrarAddr ethcommon.Address
+	ensAddr                ethcommon.Address
+	reverseRegistrarAddr   ethcommon.Address
 
 	// Embedded contract sessions
 	*contracts.ControllerSession
@@ -166,7 +168,7 @@ type client struct {
 	*contracts.MinterSession
 	*contracts.LivepeerVerifierSession
 	*contracts.LivepeerTokenFaucetSession
-	*contracts.RegisterSubdomainSession
+	*contracts.SubdomainRegistrarSession
 	*contracts.ENSSession
 	*contracts.ReverseRegistrarSession
 
@@ -432,17 +434,17 @@ func (c *client) setContracts(opts *bind.TransactOpts) error {
 	}
 
 	//TODO : Read from controller contract
-	c.registerSubdomainAddr = ethcommon.BytesToAddress([]byte("b0a6fe7b9d93c41f3e75a8595d1f78ecb1915bd0"))
-	registerSubdomainAddr := c.registerSubdomainAddr
+	c.subdomainRegistrarAddr = ethcommon.BytesToAddress([]byte("Abed993eBa05319f9D50084e120CBd8A9B7849af"))
+	subdomainRegistrarAddr := c.subdomainRegistrarAddr
 
-	registerSubdomain, err := contracts.NewRegisterSubdomain(registerSubdomainAddr, c.backend)
+	subdomainRegistrar, err := contracts.NewSubdomainRegistrar(subdomainRegistrarAddr, c.backend)
 	if err != nil {
 		glog.Errorf("Error creating Register subdomain binding: %v", err)
 		return err
 	}
 
-	c.RegisterSubdomainSession = &contracts.RegisterSubdomainSession{
-		Contract:     registerSubdomain,
+	c.SubdomainRegistrarSession = &contracts.SubdomainRegistrarSession{
+		Contract:     subdomainRegistrar,
 		TransactOpts: *opts,
 	}
 
@@ -896,7 +898,7 @@ func (c *client) GetClaim(jobID *big.Int, claimID *big.Int) (*lpTypes.Claim, err
 		ClaimBlock:                   cInfo.ClaimBlock,
 		EndVerificationBlock:         cInfo.EndVerificationBlock,
 		EndVerificationSlashingBlock: cInfo.EndVerificationSlashingBlock,
-		Status: status,
+		Status:                       status,
 	}, nil
 }
 
