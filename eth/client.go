@@ -18,6 +18,7 @@ package eth
 //go:generate abigen --abi SubdomainRegistrar.abi --pkg contracts --type SubdomainRegistrar --out subdomainRegistrar.go
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -969,7 +970,7 @@ func (c *client) ContractAddresses() map[string]ethcommon.Address {
 	addrMap["BondingManager"] = c.bondingManagerAddr
 	addrMap["Minter"] = c.minterAddr
 	addrMap["Verifier"] = c.verifierAddr
-	//addrMap["Subdomainer"] = c.subdomainAddr
+	addrMap["SubdomainRegistrar"] = c.subdomainRegistrarAddr
 	return addrMap
 }
 
@@ -1058,29 +1059,77 @@ func (c *client) ReplaceTransaction(tx *types.Transaction, method string, gasPri
 
 func (c *client) RegisterSubdomain(subdomain string) error {
 
+	/*TODO :
+	1.Check if reverse registration for an address is done
+	2.Do reverse registration
+	3.Do forward registration
+	*/
+	fmt.Printf("My address is %v\n", c.accountManager.Account.Address.Hex())
+
+	//Get reverse node
+	reverseNode, err := c.ReverseRegistrarSession.Node(c.accountManager.Account.Address)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Reverse Node to look is %v\n")
+
+	//Check if reverse registration is done.
+	reverseOwner, err := c.ENSSession.Owner(reverseNode)
+
+	fmt.Printf("Reverse owner value is %v\n", reverseOwner.Hex())
+
+	//TODO better check for null address?
+	emptyByteVar := make([]byte, 20)
+	if bytes.Equal(reverseOwner.Bytes(), emptyByteVar) {
+		tx, err := c.ReverseRegistrarSession.SetName(subdomain + ".transcoder.eth")
+		if err != nil {
+			return err
+		}
+
+		err = c.CheckTx(tx)
+		if err != nil {
+			return err
+		}
+	}
+
+	//Check subdomain Owner
+
 	//c.ReverseRegistrarSession.Claim(c.registerSubdomainAddr)
 
 	//c.RegisterSubdomainSession.RegisterSubdomain(subdomain)
 	//TODO : Really?
 
 	/*
+		if allowance.Cmp(amount) == -1 {
+			tx, err := c.Approve(c.bondingManagerAddr, amount)
+			if err != nil {
+				return nil, err
+			}
+
+			err = c.CheckTx(tx)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+
+				var subNode [32]byte
+				copy(subNode[:], []byte(subdomain))
+				_, err := c.ReverseRegistrarSession(subNode)
+				if err != nil {
+					return err
+				}
+
+
+			//var subNode [32]byte
+			//copy(subNode[:], []byte(subdomain))
+			kecHash := crypto.Keccak256([]byte(subdomain))
 			var subNode [32]byte
-			copy(subNode[:], []byte(subdomain))
-			_, err := c.ReverseRegistrarSession(subNode)
+			copy(subNode[:], []byte(kecHash))
+			_, err := c.SubdomainerSession.SubRegister(subNode, subdomain)
 			if err != nil {
 				return err
 			}
-
-
-		//var subNode [32]byte
-		//copy(subNode[:], []byte(subdomain))
-		kecHash := crypto.Keccak256([]byte(subdomain))
-		var subNode [32]byte
-		copy(subNode[:], []byte(kecHash))
-		_, err := c.SubdomainerSession.SubRegister(subNode, subdomain)
-		if err != nil {
-			return err
-		}
 	*/
 	return nil
 }
