@@ -39,6 +39,7 @@ import (
 	"github.com/livepeer/go-livepeer/common"
 	"github.com/livepeer/go-livepeer/eth/contracts"
 	lpTypes "github.com/livepeer/go-livepeer/eth/types"
+	ethereal "github.com/wealdtech/ethereal/ens"
 )
 
 var (
@@ -419,7 +420,7 @@ func (c *client) setContracts(opts *bind.TransactOpts) error {
 	*/
 
 	//c.ensAddr = ethcommon.BytesToAddress([]byte("e7410170f87102df0055eb195163a03b7f2bff4a"))
-	bytesHex := ethcommon.FromHex("e7410170f87102df0055eb195163a03b7f2bff4a")
+	bytesHex := ethcommon.FromHex("ada2cd09abbd19b9e286738451b33b1df6ac3c47")
 	ensAddr := ethcommon.BytesToAddress(bytesHex)
 
 	ens, err := contracts.NewENS(ensAddr, c.backend)
@@ -457,7 +458,6 @@ func (c *client) setContracts(opts *bind.TransactOpts) error {
 	//TODO Check for 0 return
 	reverseRegistrarAddr, err := c.ENSSession.Owner(reverseRegistrarHash)
 	fmt.Printf("Querying the data %v", reverseRegistrarHash)
-
 	if err != nil {
 		glog.Errorf("Error fetching reverse registrar address: %v", err)
 		return err
@@ -1065,23 +1065,30 @@ func (c *client) RegisterSubdomain(subdomain string) error {
 	3.Do forward registration
 	*/
 	fmt.Printf("My address is %v\n", c.accountManager.Account.Address.Hex())
+	fmt.Printf("Sub is  %v\n", subdomain)
+	domain := subdomain
+	domain += ".transcoder.eth"
+	fmt.Printf("Sub is  %v\n", domain)
 
 	//Get reverse node
 	reverseNode, err := c.ReverseRegistrarSession.Node(c.accountManager.Account.Address)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Reverse Node to look is %v\n")
+	fmt.Printf("Reverse Node to look is %v\n", reverseNode)
 
 	//Check if reverse registration is done.
 	reverseOwner, err := c.ENSSession.Owner(reverseNode)
+	if err != nil {
+		return err
+	}
 
 	fmt.Printf("Reverse owner value is %v\n", reverseOwner.Hex())
 
 	//TODO better check for null address?
 	emptyByteVar := make([]byte, 20)
 	if bytes.Equal(reverseOwner.Bytes(), emptyByteVar) {
-		tx, err := c.ReverseRegistrarSession.SetName(subdomain + ".transcoder.eth")
+		tx, err := c.ReverseRegistrarSession.SetName(domain)
 		if err != nil {
 			return err
 		}
@@ -1092,45 +1099,24 @@ func (c *client) RegisterSubdomain(subdomain string) error {
 		}
 	}
 
-	//Check subdomain Owner
+	nameHash := ethereal.NameHash(domain)
+	fmt.Printf("Name hash is :%v\n", nameHash)
 
-	//c.ReverseRegistrarSession.Claim(c.registerSubdomainAddr)
+	ensNodeOwner, err := c.ENSSession.Owner(nameHash)
+	if err != nil {
+		return err
+	}
 
-	//c.RegisterSubdomainSession.RegisterSubdomain(subdomain)
-	//TODO : Really?
-
-	/*
-		if allowance.Cmp(amount) == -1 {
-			tx, err := c.Approve(c.bondingManagerAddr, amount)
-			if err != nil {
-				return nil, err
-			}
-
-			err = c.CheckTx(tx)
-			if err != nil {
-				return nil, err
-			}
+	if bytes.Equal(ensNodeOwner.Bytes(), emptyByteVar) {
+		tx, err := c.SubdomainRegistrarSession.RegisterSubdomain(subdomain)
+		if err != nil {
+			return err
 		}
-
-
-				var subNode [32]byte
-				copy(subNode[:], []byte(subdomain))
-				_, err := c.ReverseRegistrarSession(subNode)
-				if err != nil {
-					return err
-				}
-
-
-			//var subNode [32]byte
-			//copy(subNode[:], []byte(subdomain))
-			kecHash := crypto.Keccak256([]byte(subdomain))
-			var subNode [32]byte
-			copy(subNode[:], []byte(kecHash))
-			_, err := c.SubdomainerSession.SubRegister(subNode, subdomain)
-			if err != nil {
-				return err
-			}
-	*/
+		err = c.CheckTx(tx)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
