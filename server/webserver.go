@@ -180,7 +180,6 @@ func (s *LivepeerServer) StartWebserver(bindAddr string) {
 
 	mux.HandleFunc("/registerENSsubDomain", func(w http.ResponseWriter, r *http.Request) {
 		subDomain := r.FormValue("subDomain")
-		s.LivepeerNode.Eth.RegisterSubdomain(subDomain)
 		fmt.Printf("Subdomain to create is : %v", subDomain)
 		err := s.LivepeerNode.Eth.RegisterSubdomain(subDomain)
 		if err != nil {
