@@ -429,13 +429,11 @@ func (c *client) setContracts(opts *bind.TransactOpts) error {
 
 	bytesHex := ethcommon.FromHex("dc8c103fa851fd82519aa746bd9d09d0f23f1849")
 	ensAddr := ethcommon.BytesToAddress(bytesHex)
-
 	ens, err := contracts.NewENS(ensAddr, c.backend)
 	if err != nil {
 		glog.Errorf("Error creating ENS binding: %v", err)
 		return err
 	}
-	fmt.Printf("ENS Addr: %v <==", ensAddr.Hex())
 
 	c.ENSSession = &contracts.ENSSession{
 		Contract:     ens,
@@ -445,7 +443,6 @@ func (c *client) setContracts(opts *bind.TransactOpts) error {
 	//TODO : Read from controller contract
 	c.subdomainRegistrarAddr = ethcommon.BytesToAddress(ethcommon.FromHex("EfEBD4D3abe74137AD5F34B3A9ADc52F83A51E35"))
 	subdomainRegistrarAddr := c.subdomainRegistrarAddr
-	fmt.Printf("Create Subdomain Registrar Addr: %v <==", subdomainRegistrarAddr.Hex())
 
 	subdomainRegistrar, err := contracts.NewSubdomainRegistrar(subdomainRegistrarAddr, c.backend)
 	if err != nil {
@@ -465,14 +462,12 @@ func (c *client) setContracts(opts *bind.TransactOpts) error {
 
 	//TODO Check for 0 return
 	reverseRegistrarAddr, err := c.ENSSession.Owner(reverseRegistrarHash)
-	fmt.Printf("Querying the data %v", reverseRegistrarHash)
 	if err != nil {
 		glog.Errorf("Error fetching reverse registrar address: %v", err)
 		return err
 	}
 
 	c.reverseRegistrarAddr = reverseRegistrarAddr
-	fmt.Printf("Reverse registar Hex: %v <==", c.reverseRegistrarAddr.Hex())
 
 	reverseRegistrar, err := contracts.NewReverseRegistrar(reverseRegistrarAddr, c.backend)
 	if err != nil {
@@ -1066,26 +1061,34 @@ func (c *client) ReplaceTransaction(tx *types.Transaction, method string, gasPri
 }
 
 func (c *client) RegisterSubdomain(subdomain string) error {
-
 	/*TODO :
 	1.Check if reverse registration for an address is done
-	2.Do reverse registration
-	3.Do forward registration
 	*/
-	fmt.Printf("My address is %v\n", c.accountManager.Account.Address.Hex())
-	fmt.Printf("Sub is  %v\n", subdomain)
-	domain := subdomain
 
-	//TODO : Read from registry contract
-	domain += ".transcoder.eth"
-	fmt.Printf("Sub is  %v\n", domain)
+	rootName, err := c.SubdomainRegistrarSession.RootName()
+	if err != nil {
+		return err
+	}
+
+	domain := subdomain + "." + rootName
+	nameHash := ethereal.NameHash(domain)
+
+	ensNodeOwner, err := c.ENSSession.Owner(nameHash)
+	if err != nil {
+		return err
+	}
+
+	emptyByteVar := make([]byte, 20)
+	if !bytes.Equal(ensNodeOwner.Bytes(), emptyByteVar) {
+		glog.Error("Sorry!This domain is already registered!")
+		return fmt.Errorf("domain is already registered")
+	}
 
 	//Get reverse node
 	reverseNode, err := c.ReverseRegistrarSession.Node(c.accountManager.Account.Address)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Reverse Node to look is %v\n", reverseNode)
 
 	//Check if reverse registration is done.
 	reverseOwner, err := c.ENSSession.Owner(reverseNode)
@@ -1093,10 +1096,7 @@ func (c *client) RegisterSubdomain(subdomain string) error {
 		return err
 	}
 
-	fmt.Printf("Reverse owner value is %v\n", reverseOwner.Hex())
-
-	//TODO better check for null address?
-	emptyByteVar := make([]byte, 20)
+	//TODO : Improve to allow setting name via resolver if already set
 	if bytes.Equal(reverseOwner.Bytes(), emptyByteVar) {
 		tx, err := c.ReverseRegistrarSession.SetName(domain)
 		if err != nil {
@@ -1109,22 +1109,16 @@ func (c *client) RegisterSubdomain(subdomain string) error {
 		}
 	}
 
-	nameHash := ethereal.NameHash(domain)
-	ensNodeOwner, err := c.ENSSession.Owner(nameHash)
+	//Register subdomain
+	tx, err := c.SubdomainRegistrarSession.RegisterSubdomain(subdomain)
+	if err != nil {
+		return err
+	}
+	err = c.CheckTx(tx)
 	if err != nil {
 		return err
 	}
 
-	if bytes.Equal(ensNodeOwner.Bytes(), emptyByteVar) {
-		tx, err := c.SubdomainRegistrarSession.RegisterSubdomain(subdomain)
-		if err != nil {
-			return err
-		}
-		err = c.CheckTx(tx)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }
 

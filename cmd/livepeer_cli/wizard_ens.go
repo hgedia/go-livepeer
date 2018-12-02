@@ -8,7 +8,6 @@ import (
 func (w *wizard) registerENSSubdomain() {
 	fmt.Println("Enter subdomain 'name' in <name>.transcoder.eth :")
 	subDomain := w.read()
-	fmt.Printf("Subdomain to create wizard %s", subDomain)
 	val := url.Values{
 		"subDomain": {fmt.Sprintf("%v", subDomain)},
 	}
